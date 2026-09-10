@@ -1,14 +1,17 @@
 # AI YouTube Clip Generator
 
-Local-only React and Node.js app that downloads a YouTube video, transcribes it with Whisper, asks Ollama to select strong moments, and renders captioned 9:16 MP4 clips with FFmpeg.
+Turn long-form YouTube videos into captioned vertical clips locally. This React and Node.js app downloads a video, transcribes it with Whisper, uses a local Ollama model to identify strong moments, and renders 9:16 MP4 clips with FFmpeg. No video or transcript data is sent to a hosted AI service by the app.
 
-## Requirements (Windows 11)
+## What you need
+
+These are the required local tools:
 
 - Node.js 20 or newer: install from [nodejs.org](https://nodejs.org/).
-- **yt-dlp and Deno**: install with `winget install --id yt-dlp.yt-dlp -e`, then restart the terminal. This installs yt-dlp, Deno, and FFmpeg. Alternatively, download `yt-dlp.exe`, put it on `PATH`, or set `YTDLP_COMMAND` and `DENO_COMMAND` to their full paths in `backend/.env`.
-- **FFmpeg**: install a current Windows build, put its `bin` directory on `PATH`, and confirm `ffmpeg -version` works.
-- **Whisper**: the setup below downloads the official whisper.cpp Windows x64 build and `ggml-base.en.bin` into `tools/whisper` and `models`. You can also install whisper.cpp separately and set `WHISPER_COMMAND` and `WHISPER_MODEL` to full paths in `backend/.env`.
-- **Ollama**: install from [ollama.com](https://ollama.com), then run `ollama pull llama3.2`.
+- **yt-dlp, Deno, and FFmpeg**: install with `winget install --id yt-dlp.yt-dlp -e`, then restart the terminal. Verify with `yt-dlp --version`, `deno --version`, and `ffmpeg -version`.
+- **Whisper**: the setup below downloads the official whisper.cpp Windows x64 build and `ggml-base.en.bin` into `tools/whisper` and `models`.
+- **Ollama**: install from [ollama.com](https://ollama.com), start the Ollama app or service, then download the default model with `ollama pull llama3.2`. Verify with `ollama list`.
+
+Whisper can also be installed separately. Set `WHISPER_COMMAND` and `WHISPER_MODEL` to full paths in `backend/.env` if you do not use the bundled setup. The same `.env` file supports custom paths for yt-dlp, Deno, and FFmpeg.
 
 For videos that return YouTube HTTP 403, set `YOUTUBE_COOKIES_FROM_BROWSER=brave` (or `chrome`, `edge`, or `firefox`) in `backend/.env`, then restart the backend. yt-dlp will use that browser's local YouTube cookies; close the browser first if cookie access is blocked.
 

@@ -1,0 +1,7 @@
+node_modules/
+data/temp/
+data/output/
+backend/.env
+dist/
+tools/whisper/
+models/

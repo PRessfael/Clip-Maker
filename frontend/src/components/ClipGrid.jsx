@@ -1,0 +1,2 @@
+import ClipCard from './ClipCard.jsx';
+export default function ClipGrid({ clips }) { return <section className="results"><div className="section-label"><span>Generated Clips</span><span>{clips.length} ready</span></div><div className="clip-grid">{clips.map((clip, index) => <ClipCard key={clip.filename} clip={clip} index={index} />)}</div></section>; }

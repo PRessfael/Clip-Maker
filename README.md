@@ -1,0 +1,49 @@
+# AI YouTube Clip Generator
+
+Local-only React and Node.js app that downloads a YouTube video, transcribes it with Whisper, asks Ollama to select strong moments, and renders captioned 9:16 MP4 clips with FFmpeg.
+
+## Requirements (Windows 11)
+
+- Node.js 20 or newer: install from [nodejs.org](https://nodejs.org/).
+- **yt-dlp and Deno**: install with `winget install --id yt-dlp.yt-dlp -e`, then restart the terminal. This installs yt-dlp, Deno, and FFmpeg. Alternatively, download `yt-dlp.exe`, put it on `PATH`, or set `YTDLP_COMMAND` and `DENO_COMMAND` to their full paths in `backend/.env`.
+- **FFmpeg**: install a current Windows build, put its `bin` directory on `PATH`, and confirm `ffmpeg -version` works.
+- **Whisper**: the setup below downloads the official whisper.cpp Windows x64 build and `ggml-base.en.bin` into `tools/whisper` and `models`. You can also install whisper.cpp separately and set `WHISPER_COMMAND` and `WHISPER_MODEL` to full paths in `backend/.env`.
+- **Ollama**: install from [ollama.com](https://ollama.com), then run `ollama pull llama3.2`.
+
+For videos that return YouTube HTTP 403, set `YOUTUBE_COOKIES_FROM_BROWSER=brave` (or `chrome`, `edge`, or `firefox`) in `backend/.env`, then restart the backend. yt-dlp will use that browser's local YouTube cookies; close the browser first if cookie access is blocked.
+
+If yt-dlp cannot copy Brave's cookie database, close every Brave window and retry. The app also automatically retries without cookies when the cookie database is locked.
+
+## Install and run
+
+From this folder:
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+npm install
+npm run install:all
+npm run dev
+```
+
+To install the bundled local Whisper files manually from PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force tools/whisper, models
+Invoke-WebRequest https://github.com/ggml-org/whisper.cpp/releases/download/b4938/whisper-bin-x64.zip -OutFile "$env:TEMP/whisper.zip"
+Expand-Archive "$env:TEMP/whisper.zip" -DestinationPath tools/whisper -Force
+Invoke-WebRequest "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin?download=true" -OutFile models/ggml-base.en.bin
+```
+
+Open `http://localhost:5173`. The API listens only on `127.0.0.1:3001`.
+
+The Whisper command-line output format differs between builds. This app supports the JSON formats emitted by current whisper.cpp builds (`--output-json`); if your build uses a different flag, adapt `backend/src/services/transcription.js`.
+
+## Troubleshooting
+
+- A missing executable produces a readable job error; verify it from PowerShell with `where.exe yt-dlp`, `where.exe ffmpeg`, and `where.exe whisper-cli`.
+- After installing yt-dlp with WinGet, start a new terminal before running `npm run dev` so the updated PATH is inherited by Node.js.
+- If clip selection fails, start Ollama and verify the model with `ollama list`.
+- YouTube downloads can fail for unavailable, age-restricted, or login-required videos. Use a public video URL and update yt-dlp.
+- HTTP 403 and unavailable-format responses trigger an alternate IPv4/embedded-client download using a progressive MP4 format. If both attempts fail, configure `YOUTUBE_COOKIES_FROM_BROWSER` as described above.
+- Generated clips are kept in `data/output/<jobId>` until their Download MP4 link finishes. Previewing a clip does not delete it. Temporary source files are deleted after every job, including failed jobs.
+- To remove output from jobs created before automatic cleanup was added, run `Remove-Item data/output/* -Recurse -Force` from the project folder. This deletes generated clips but not the Whisper model or other tools.

@@ -39,6 +39,12 @@ Invoke-WebRequest "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggm
 
 Open `http://localhost:5173`. The API listens only on `127.0.0.1:3001`.
 
+## Analyze authorized gameplay
+
+Use the **Select local gameplay video** control in the app to upload an authorized campaign MP4. The upload is written to disk with a 4 GB limit; the original file is never loaded into memory or sent to Ollama. FFprobe reads metadata, then FFmpeg samples low-resolution video and mono audio signals to build activity candidates. Whisper is supporting evidence only, and Ollama receives candidate timestamps, scores, and transcript snippets rather than video data. The top distinct candidates are rendered as 9:16 clips with the original gameplay audio.
+
+Compact analysis metadata and ranked results are kept in `data/output/<jobId>/analysis.json`. Temporary sampled signals and uploaded copies are removed after processing.
+
 The Whisper command-line output format differs between builds. This app supports the JSON formats emitted by current whisper.cpp builds (`--output-json`); if your build uses a different flag, adapt `backend/src/services/transcription.js`.
 
 ## Troubleshooting

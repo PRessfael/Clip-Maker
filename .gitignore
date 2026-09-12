@@ -2,6 +2,7 @@ node_modules/
 data/temp/
 data/output/
 backend/.env
+backend/.env.example
 dist/
 tools/whisper/
 models/

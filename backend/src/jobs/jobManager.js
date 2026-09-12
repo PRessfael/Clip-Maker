@@ -2,9 +2,9 @@ import crypto from 'node:crypto';
 
 const jobs = new Map();
 
-export function createJob(url) {
+export function createJob(source) {
   const id = crypto.randomBytes(6).toString('hex');
-  const job = { id, url, status: 'waiting', progress: 0, message: 'Queued for processing', clips: [], error: null };
+  const job = { id, ...source, status: 'waiting', progress: 0, message: 'Queued for processing', clips: [], error: null };
   jobs.set(id, job);
   return job;
 }

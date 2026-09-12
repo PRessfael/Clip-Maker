@@ -1,4 +1,4 @@
-const steps = [['downloading', 'Download'], ['extracting_audio', 'Extract audio'], ['transcribing', 'Transcribe'], ['finding_clips', 'Find moments'], ['rendering', 'Render clips']];
+const steps = [['downloading', 'Download'], ['inspecting', 'Inspect video'], ['extracting_audio', 'Extract audio'], ['transcribing', 'Transcribe'], ['analyzing_activity', 'Analyze action'], ['evaluating_candidates', 'Rank moments'], ['finding_clips', 'Find moments'], ['rendering', 'Render clips']];
 export default function Progress({ status, progress, message }) {
   return <section className="progress-panel"><div className="progress-head"><span>{message}</span><strong>{progress}%</strong></div><div className="progress-track"><div style={{ width: `${progress}%` }} /></div><div className="steps">{steps.map(([key, label]) => <span className={status === key ? 'active' : ''} key={key}>{label}</span>)}</div></section>;
 }

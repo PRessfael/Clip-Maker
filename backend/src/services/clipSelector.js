@@ -26,7 +26,8 @@ async function askOllama(candidates) {
   const prompt = `Select the best distinct short-form clips from these timestamped candidates. Return ONLY JSON in the shape {"clips":[{"start":number,"end":number,"score":number,"reason":string}]}. Pick up to 5, score 0-100, prefer complete, self-contained, surprising or useful moments. Copy start and end EXACTLY from candidate ranges. Do not invent timestamps. The transcript may describe only dialogue, so prefer moments with a clear setup and payoff.\n${JSON.stringify(candidates)}`;
   const response = await fetch(`${process.env.OLLAMA_URL || 'http://localhost:11434'}/api/generate`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: process.env.OLLAMA_MODEL || 'llama3.2', prompt, stream: false, format: 'json' })
+    body: JSON.stringify({ model: process.env.OLLAMA_MODEL || 'llama3.2', prompt, stream: false, format: 'json' }),
+    signal: AbortSignal.timeout(Number(process.env.OLLAMA_TIMEOUT_MS || 90000))
   });
   if (!response.ok) throw new Error(`Ollama returned HTTP ${response.status}.`);
   const body = await response.json();
@@ -36,7 +37,13 @@ async function askOllama(candidates) {
 export async function selectClips(segments) {
   const candidates = candidatesFromTranscript(segments);
   if (!candidates.length) throw new Error('No 20-90 second clip candidates were found.');
-  const result = await askOllama(candidates);
+  let result;
+  try {
+    result = await askOllama(candidates);
+  } catch (error) {
+    console.warn('Transcript clip ranking fallback:', error.message);
+    result = { clips: [] };
+  }
   const valid = (Array.isArray(result.clips) ? result.clips : []).map((clip) => ({
     start: timestamp(clip.start), end: timestamp(clip.end), score: Number(clip.score), reason: String(clip.reason || 'Selected as a strong short-form moment.')
   })).filter((clip) => Number.isFinite(clip.start) && Number.isFinite(clip.end) && Number.isFinite(clip.score) && clip.end > clip.start && clip.end - clip.start >= 15 && clip.end - clip.start <= 100).map((clip) => ({ ...clip, score: Math.max(0, Math.min(100, clip.score)) }));
@@ -45,6 +52,15 @@ export async function selectClips(segments) {
   for (const clip of valid) {
     if (!distinct.some((other) => Math.min(clip.end, other.end) - Math.max(clip.start, other.start) > Math.min(clip.end - clip.start, other.end - other.start) * 0.35)) distinct.push(clip);
     if (distinct.length === 5) break;
+  }
+  for (let index = 0; distinct.length < 5 && index < candidates.length; index += 1) {
+    const candidate = candidates[index];
+    if (distinct.some((other) => Math.min(candidate.end, other.end) - Math.max(candidate.start, other.start) > Math.min(candidate.end - candidate.start, other.end - other.start) * 0.35)) continue;
+    distinct.push({
+      ...candidate,
+      score: Math.max(55, 70 - distinct.length * 5),
+      reason: 'Supplemental distinct moment selected from the source candidates.'
+    });
   }
   if (!distinct.length) {
     const fallbackCandidates = candidatesFromTranscript(segments);

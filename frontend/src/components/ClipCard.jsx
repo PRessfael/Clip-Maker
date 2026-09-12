@@ -1,3 +1,4 @@
 export default function ClipCard({ clip, index }) {
-  return <article className="clip-card"><div className="video-wrap"><video controls preload="metadata" src={clip.url} /></div><div className="clip-info"><div className="clip-meta"><span>CLIP {String(index + 1).padStart(2, '0')}</span><b>{Math.round(clip.score)}/100</b></div><h3>{Math.round(clip.duration)} seconds</h3><p>{clip.reason}</p><a className="download" href={clip.downloadUrl} download>Download MP4 <span>↓</span></a></div></article>;
+  const formatTime = (value) => new Date(value * 1000).toISOString().slice(14, 19);
+  return <article className="clip-card"><div className="video-wrap"><video controls preload="metadata" src={clip.url} /></div><div className="clip-info"><div className="clip-meta"><span>#{clip.rank || index + 1} · {formatTime(clip.start)} - {formatTime(clip.end)}</span><b>{Math.round(clip.score)}/100</b></div><h3>{clip.category || `${Math.round(clip.duration)} seconds`}</h3><p>{clip.reason}</p><a className="download" href={clip.downloadUrl} download>Download MP4 <span>↓</span></a></div></article>;
 }

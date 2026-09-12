@@ -14,11 +14,11 @@ async function writeCaptions(file, segments, clipStart, clipEnd) {
   await fs.writeFile(file, ass);
 }
 
-export async function renderClip(videoPath, outputDirectory, clip, segments, index) {
+export async function renderClip(videoPath, outputDirectory, clip, segments, index, captions = true) {
   const subtitlePath = path.join(outputDirectory, `captions-${index}.ass`);
   const outputPath = path.join(outputDirectory, `clip${index}.mp4`);
-  await writeCaptions(subtitlePath, segments, clip.start, clip.end);
-  const filter = `crop='if(gt(iw/ih,9/16),ih*9/16,iw)':'if(gt(iw/ih,9/16),ih,iw*16/9)',scale=1080:1920:flags=lanczos,subtitles=captions-${index}.ass`;
+  if (captions) await writeCaptions(subtitlePath, segments, clip.start, clip.end);
+  const filter = `crop='if(gt(iw/ih,9/16),ih*9/16,iw)':'if(gt(iw/ih,9/16),ih,iw*16/9)',scale=1080:1920:flags=lanczos${captions ? `,subtitles=captions-${index}.ass` : ''}`;
   try {
     await runCommand(process.env.FFMPEG_COMMAND || 'ffmpeg', ['-y', '-ss', String(clip.start), '-i', videoPath, '-t', String(clip.end - clip.start), '-vf', filter, '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', outputPath], { cwd: outputDirectory });
   } finally {
